@@ -431,12 +431,12 @@ Finish and report on each phase before starting the next. At the end of every ph
 - [ ] Stockfish worker loads **on the device** and answers `isready` and a `go depth 8` (show the result on screen temporarily). This de-risks the biggest unknown early.
 
 ### Phase 1: Core loop
-- [ ] Board interaction per section 2 (no confirm, no undo, ignore illegal taps, legal-move dots, touch-move setting, promotion sheet).
-- [ ] Engine wrapper with queue, MultiPV, win% normalization (unit-tested with canned UCI output).
-- [ ] Opponent per 6.3 with levels 1–10 and adaptive adjustment stub.
-- [ ] Play mode: color choice, game-end detection, resign, save/resume after every move.
-- [ ] `see.ts`, `hanging.ts`, `threats.ts` with tests; threat-check prompt with all three settings; response logged.
-- [ ] Settings screen; Home screen with Play and Checklist.
+- [x] Board interaction per section 2 (no confirm, no undo, ignore illegal taps, legal-move dots, touch-move setting, promotion sheet).
+- [x] Engine wrapper with queue, MultiPV, win% normalization (unit-tested with canned UCI output).
+- [x] Opponent per 6.3 with levels 1–10 and adaptive adjustment stub.
+- [x] Play mode: color choice, game-end detection, resign, save/resume after every move.
+- [x] `see.ts`, `hanging.ts`, `threats.ts` with tests; threat-check prompt with all three settings; response logged.
+- [x] Settings screen; Home screen with Play and Checklist.
 
 ### Phase 2: The coach
 - [ ] `classify.ts` and one-search-per-position evaluation in Play mode.
@@ -516,3 +516,10 @@ Record every deviation from this spec, every version you pinned, and every worka
 - 2026-10-23: Releases are published by CI on a `v*` tag push (`.github/workflows/android.yml`, `release` job, `contents: write`), using the runner's `GITHUB_TOKEN`. This avoids storing a personal access token on the development machine and makes "build this tag and ship it" a single `git push origin vX.Y.Z`.
 - 2026-10-23: The INTERNET permission is left in the generated manifest. No app code uses the network; the permission is only needed for Capacitor's debug live-reload server, and removing it would break that workflow.
 
+- 2026-10-23: **Board layout workaround.** On the phone, rows containing the kings were twice as tall: `wK.svg`/`bK.svg` were the only pieces without an intrinsic `width`/`height`, and the WebView sized grid rows from image content instead of resolving `1fr` + `aspect-ratio`. Fixed in three layers: both king SVGs got `width="45" height="45"`, the board now sits in a `padding-bottom: 100%` frame so its height is definite without `aspect-ratio`, and pieces are absolutely positioned so they can never affect layout. Verified: 8 equal rows (spread 0 px) and a square frame at 390x844.
+- 2026-10-23: Verification caught a second board bug: empty squares had no identity because the square name came from the occupied cell (`cell?.square`), so `e3`/`e4` could not be tapped. Squares are now generated from the orientation, and pieces are looked up with `chess.get(square)`. This is why the browser check taps real squares end to end rather than only counting pieces.
+- 2026-10-23: Opponent searches send `go depth D movetime 1500` (both caps) instead of one or the other, so a slow phone stops on time and a fast one stops on depth.
+- 2026-10-23: **Adaptive stub (Phase 1).** Until `classify.ts` exists, `blundersPer100` is treated as 0: a win promotes, a loss demotes, a draw holds, clamped 1-10. The adaptive level is persisted in `progress.adaptiveLevel` and seeds the next game.
+- 2026-10-23: Threat checks run in a module Web Worker (`src/coach/worker.ts` via `client.ts`) with a synchronous fallback if worker construction fails, so an old WebView degrades instead of breaking. The prompt locks the board until the answer is given (SPEC 6.6), and the reveal highlights stay for 1.5 s without blocking the next move.
+- 2026-10-23: `settings.hintsPerGame` is stored but not shown in Settings yet, because hints themselves are Phase 2. No dead controls in the UI.
+- 2026-10-23: The Phase 0 self-test screen is gone; the app now opens on Home (Play, Checklist, Settings). The depth-8 panel was developer tooling and the user found it confusing.

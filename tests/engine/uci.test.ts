@@ -155,6 +155,24 @@ describe('UciEngine.analyze', () => {
     expect(multipvCommands).toEqual(['setoption name MultiPV value 3']);
   });
 
+  it('sends depth and movetime together so either cap can end the search', async () => {
+    const { engine, port } = await bootedEngine();
+    const pending = engine.analyze('8/8/8/8/8/8/8/K6k w - - 0 1', { depth: 6, movetime: 1500 });
+    await flush();
+    expect(port.sent).toContain('go depth 6 movetime 1500');
+    port.emit('bestmove a1a2');
+    await pending;
+  });
+
+  it('sends movetime alone when no depth is given', async () => {
+    const { engine, port } = await bootedEngine();
+    const pending = engine.analyze('8/8/8/8/8/8/8/K6k w - - 0 1', { movetime: 250 });
+    await flush();
+    expect(port.sent).toContain('go movetime 250');
+    port.emit('bestmove a1a2');
+    await pending;
+  });
+
   it('resolves a stopped search as stopped and empty', async () => {
     const { engine, port } = await bootedEngine();
     const pending = engine.analyze('8/8/8/8/8/8/8/K6k w - - 0 1', { depth: 20 });

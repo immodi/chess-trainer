@@ -26,3 +26,14 @@ export function createEngine(options: { onLine?: (line: string) => void } = {}):
   const worker = new Worker(engineWorkerUrl());
   return new UciEngine(workerPort(worker), options);
 }
+
+let shared: UciEngine | null = null;
+
+/**
+ * One engine for the whole app: starting a WASM worker costs seconds, and the
+ * engine is stateless between searches because every search sends a full FEN.
+ */
+export function getEngine(): UciEngine {
+  shared ??= createEngine();
+  return shared;
+}

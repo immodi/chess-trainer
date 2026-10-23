@@ -8,17 +8,24 @@ Stockfish can tell you that a move was bad. This app tries to tell you **why**, 
 
 ## Status
 
-**Phase 0 complete** — scaffold, static board, and Stockfish running in the app.
+**Phase 1 complete** — the app is a playable trainer, not a debug screen.
 
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Scaffold, Docker/CI pipeline, board renders, engine self-test | done |
-| 1 | Board interaction, engine wrapper, opponent, Play mode, threats, settings, home | next |
-| 2 | Move classification, detectors, feedback, game review, mistakes deck, glossary | planned |
+| 1 | Board interaction, engine wrapper, opponent, Play mode, threats, settings, home | done |
+| 2 | Move classification, detectors, feedback, game review, mistakes deck, glossary | next |
 | 3 | Puzzle import, Find the threat, Hanging pieces, Tactics, Endgames, Progress | planned |
 | 4 | Polish: haptics, animations, About, icon, performance pass | planned |
 
-What you can do today: install the APK, see a board, and watch the engine answer `go depth 8` on the start position.
+What you can do today:
+
+- Play an untimed game against a level 1-10 opponent (adaptive by default).
+- Tap a piece to see legal moves, then tap a destination to play it. No confirm step, no take-backs.
+- Answer "What is the opponent threatening?" before each move. The board highlights the real threats afterwards and your accuracy is saved.
+- Read the four-question pre-move checklist from the home screen.
+- Change difficulty, touch-move and the threat-check mode in Settings.
+- Close the app mid-game and continue where you left off.
 
 ## Install
 

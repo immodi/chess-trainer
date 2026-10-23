@@ -262,11 +262,17 @@ export class UciEngine {
     });
 
     this.send(`position fen ${fen}`);
-    const go =
-      options.movetime !== undefined
-        ? `go movetime ${Math.max(1, Math.trunc(options.movetime))}`
-        : `go depth ${Math.max(1, Math.trunc(options.depth ?? DEFAULT_DEPTH))}`;
-    this.send(go);
+    const depth = options.depth === undefined ? undefined : Math.max(1, Math.trunc(options.depth));
+    const movetime = options.movetime === undefined ? undefined : Math.max(1, Math.trunc(options.movetime));
+
+    // `go depth D movetime M` lets the engine stop at whichever comes first,
+    // which is exactly what the opponent wants: a depth cap and a time cap.
+    const parts = ['go'];
+    if (depth !== undefined) parts.push(`depth ${depth}`);
+    if (movetime !== undefined) parts.push(`movetime ${movetime}`);
+    if (depth === undefined && movetime === undefined) parts.push(`depth ${DEFAULT_DEPTH}`);
+
+    this.send(parts.join(' '));
 
     return result;
   }
