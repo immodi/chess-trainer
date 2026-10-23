@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { GameMode } from '../../modes/play';
-import type { Progress } from '../../storage/progress';
-import { EMPTY_PROGRESS, loadProgress } from '../../storage/progress';
 import { loadGame } from '../../storage/game';
 import type { SavedGame } from '../../storage/game';
 
 export interface HomeProps {
   onPlay: (mode: GameMode, resume: boolean) => void;
-  onChecklist: () => void;
+  onLearn: () => void;
   onSettings: () => void;
 }
 
@@ -18,28 +16,19 @@ interface SavedGames {
 
 const NO_SAVES: SavedGames = { practice: null, casual: null };
 
-export function Home({ onPlay, onChecklist, onSettings }: HomeProps) {
+export function Home({ onPlay, onLearn, onSettings }: HomeProps) {
   const [saved, setSaved] = useState<SavedGames>(NO_SAVES);
-  const [progress, setProgress] = useState<Progress>(EMPTY_PROGRESS);
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([loadGame('practice'), loadGame('casual'), loadProgress()]).then(
-      ([practice, casual, stored]) => {
-        if (cancelled) return;
-        setSaved({ practice, casual });
-        setProgress(stored);
-      },
-    );
+    void Promise.all([loadGame('practice'), loadGame('casual')]).then(([practice, casual]) => {
+      if (cancelled) return;
+      setSaved({ practice, casual });
+    });
     return () => {
       cancelled = true;
     };
   }, []);
-
-  const accuracy =
-    progress.threatAnswers > 0
-      ? Math.round((progress.threatCorrect / progress.threatAnswers) * 100)
-      : null;
 
   return (
     <main className="app app--home">
@@ -65,24 +54,16 @@ export function Home({ onPlay, onChecklist, onSettings }: HomeProps) {
         />
       </section>
 
-      <button type="button" className="card card--link" onClick={onChecklist}>
-        <span className="card__title">Before every move</span>
-        <span className="card__body">The four questions that catch most beginner mistakes.</span>
+      <button type="button" className="card card--link" onClick={onLearn}>
+        <span className="card__title">Learn</span>
+        <span className="card__body">
+          The pre-move checklist, your threat-check stats, the glossary and mistakes to review.
+        </span>
       </button>
-
-      {accuracy !== null ? (
-        <section className="card">
-          <span className="card__title">Your threat checks</span>
-          <span className="card__body">
-            {accuracy}% correct over {progress.threatAnswers}{' '}
-            {progress.threatAnswers === 1 ? 'answer' : 'answers'}.
-          </span>
-        </section>
-      ) : null}
 
       <button type="button" className="card card--link" onClick={onSettings}>
         <span className="card__title">Settings</span>
-        <span className="card__body">Difficulty, touch-move and the threat check.</span>
+        <span className="card__body">Difficulty, touch-move, threat checks and hints.</span>
       </button>
 
       <p className="home__footnote">Works fully offline. No account, no ads.</p>

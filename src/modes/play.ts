@@ -20,8 +20,18 @@ export interface PlayedMove {
   san: string;
   from: Square;
   to: Square;
+  /** Set on promotion moves; needed to rebuild the UCI form for review. */
+  promotion?: PieceSymbol;
   color: Color;
   piece: PieceSymbol;
+}
+
+/** A hint the user asked for, recorded so Review can flag the move. */
+export interface HintUse {
+  /** Index in `moves` of the move the hint was for. */
+  ply: number;
+  /** 1 = threat warning, 2 = piece to look at, 3 = engine move. */
+  level: number;
 }
 
 export interface GameState {
@@ -32,6 +42,7 @@ export interface GameState {
   /** Adaptive level this game is being played at. */
   level: number;
   mode: GameMode;
+  hints: HintUse[];
   outcome: GameOutcome | null;
 }
 
@@ -46,7 +57,7 @@ export function newGame(
   level: number,
   mode: GameMode = 'practice',
 ): GameState {
-  return { fen: START_FEN, moves: [], userColor, level, mode, outcome: null };
+  return { fen: START_FEN, moves: [], userColor, level, mode, hints: [], outcome: null };
 }
 
 /** Rebuilds the position with full history from the SAN list. */
@@ -95,7 +106,14 @@ export function applyMove(state: GameState, move: MoveInput): GameState | null {
     fen: chess.fen(),
     moves: [
       ...state.moves,
-      { san: played.san, from: played.from, to: played.to, color: played.color, piece: played.piece },
+      {
+        san: played.san,
+        from: played.from,
+        to: played.to,
+        ...(played.promotion ? { promotion: played.promotion } : {}),
+        color: played.color,
+        piece: played.piece,
+      },
     ],
     outcome: outcomeOf(chess),
   };
@@ -120,6 +138,7 @@ export interface SavedInput {
   level: number;
   /** Missing in saves written before casual mode existed. */
   mode?: GameMode;
+  hints?: HintUse[];
 }
 
 /** Rebuilds a game from saved SAN moves. Returns null for an unusable save. */
@@ -138,6 +157,7 @@ export function fromSaved(saved: SavedInput): GameState | null {
       san: played.san,
       from: played.from,
       to: played.to,
+      ...(played.promotion ? { promotion: played.promotion } : {}),
       color: played.color,
       piece: played.piece,
     });
@@ -149,8 +169,31 @@ export function fromSaved(saved: SavedInput): GameState | null {
     userColor: saved.userColor,
     level: saved.level,
     mode: saved.mode === 'casual' ? 'casual' : 'practice',
+    hints: normaliseHints(saved.hints),
     outcome: outcomeOf(chess),
   };
+}
+
+/** UCI form of a played move, e.g. `e7e8q`. */
+export function playedUci(move: PlayedMove): string {
+  return `${move.from}${move.to}${move.promotion ?? ''}`;
+}
+
+/** Accepts anything from storage and returns usable hint entries. */
+export function normaliseHints(raw: unknown): HintUse[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry) => {
+    if (typeof entry !== 'object' || entry === null) return [];
+    const value = entry as Partial<HintUse>;
+    if (typeof value.ply !== 'number' || typeof value.level !== 'number') return [];
+    if (!Number.isFinite(value.ply) || !Number.isFinite(value.level)) return [];
+    return [
+      {
+        ply: Math.max(0, Math.trunc(value.ply)),
+        level: Math.min(3, Math.max(1, Math.trunc(value.level))),
+      },
+    ];
+  });
 }
 
 export function resultText(outcome: GameOutcome, userColor: Color): string {

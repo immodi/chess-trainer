@@ -11,6 +11,12 @@ export interface BoardMove {
   promotion?: PieceSymbol;
 }
 
+export interface BoardArrow {
+  from: Square;
+  to: Square;
+  color: 'red' | 'green' | 'blue';
+}
+
 export interface BoardProps {
   fen: string;
   orientation?: Color;
@@ -22,6 +28,8 @@ export interface BoardProps {
   markedSquares?: readonly Square[];
   correctSquares?: readonly Square[];
   wrongSquares?: readonly Square[];
+  hintSquares?: readonly Square[];
+  arrows?: readonly BoardArrow[];
   disabled?: boolean;
   onMove?: (move: BoardMove) => void;
   onToggleSquare?: (square: Square) => void;
@@ -75,6 +83,8 @@ export function Board({
   markedSquares = [],
   correctSquares = [],
   wrongSquares = [],
+  hintSquares = [],
+  arrows = [],
   disabled = false,
   onMove,
   onToggleSquare,
@@ -128,6 +138,7 @@ export function Board({
   const marked = new Set(markedSquares);
   const correct = new Set(correctSquares);
   const wrong = new Set(wrongSquares);
+  const hints = new Set(hintSquares);
 
   const selectSquare = (square: Square): void => {
     const piece = position.get(square);
@@ -203,6 +214,7 @@ export function Board({
               if (marked.has(square)) classes.push('board__square--marked');
               if (correct.has(square)) classes.push('board__square--correct');
               if (wrong.has(square)) classes.push('board__square--wrong');
+              if (hints.has(square)) classes.push('board__square--hint');
 
               return (
                 <div
@@ -228,6 +240,8 @@ export function Board({
         ))}
       </div>
 
+      <BoardArrows arrows={arrows} orientation={orientation} />
+
       {pendingPromotion ? (
         <div className="promotion" role="dialog" aria-label="Choose a promotion piece">
           <p className="promotion__title">Promote to</p>
@@ -249,5 +263,77 @@ export function Board({
         </div>
       ) : null}
     </div>
+  );
+}
+
+const ARROW_COLORS: Record<BoardArrow['color'], string> = {
+  red: '#e5484d',
+  green: '#30a46c',
+  blue: '#6ea8fe',
+};
+
+function centerOf(square: Square, orientation: Color): { x: number; y: number } {
+  const file = square.charCodeAt(0) - 'a'.charCodeAt(0);
+  const rank = Number(square[1]) - 1;
+  const x = orientation === 'w' ? file : 7 - file;
+  const y = orientation === 'w' ? 7 - rank : rank;
+  return { x: x + 0.5, y: y + 0.5 };
+}
+
+function BoardArrows({
+  arrows,
+  orientation,
+}: {
+  arrows: readonly BoardArrow[];
+  orientation: Color;
+}) {
+  if (arrows.length === 0) return null;
+
+  return (
+    <svg
+      className="board__arrows"
+      viewBox="0 0 8 8"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        {(Object.keys(ARROW_COLORS) as BoardArrow['color'][]).map((color) => (
+          <marker
+            key={color}
+            id={`board-arrow-${color}`}
+            markerWidth="4"
+            markerHeight="4"
+            refX="3"
+            refY="2"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M0,0 L4,2 L0,4 z" fill={ARROW_COLORS[color]} />
+          </marker>
+        ))}
+      </defs>
+      {arrows.map((arrow) => {
+        const from = centerOf(arrow.from, orientation);
+        const to = centerOf(arrow.to, orientation);
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const ux = dx / length;
+        const uy = dy / length;
+        return (
+          <line
+            key={`${arrow.from}${arrow.to}${arrow.color}`}
+            x1={from.x + ux * 0.24}
+            y1={from.y + uy * 0.24}
+            x2={to.x - ux * 0.3}
+            y2={to.y - uy * 0.3}
+            stroke={ARROW_COLORS[arrow.color]}
+            strokeWidth={0.1}
+            strokeLinecap="round"
+            markerEnd={`url(#board-arrow-${arrow.color})`}
+          />
+        );
+      })}
+    </svg>
   );
 }

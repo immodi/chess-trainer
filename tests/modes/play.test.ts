@@ -6,6 +6,8 @@ import {
   fromSaved,
   isUserTurn,
   newGame,
+  normaliseHints,
+  playedUci,
   resign,
   resultFor,
   resultText,
@@ -91,6 +93,36 @@ describe('applyUci', () => {
   });
 });
 
+describe('promotions and hints', () => {
+  it('keeps the promotion piece in the UCI form', () => {
+    expect(
+      playedUci({
+        san: 'b8=Q+',
+        from: 'b7',
+        to: 'b8',
+        promotion: 'q',
+        color: 'w',
+        piece: 'p',
+      }),
+    ).toBe('b7b8q');
+  });
+
+  it('normalises stored hints and drops junk', () => {
+    expect(
+      normaliseHints([
+        { ply: 1.9, level: 9 },
+        { ply: -2, level: 0 },
+        null,
+        { ply: 'x', level: 2 },
+      ]),
+    ).toEqual([
+      { ply: 1, level: 3 },
+      { ply: 0, level: 1 },
+    ]);
+    expect(normaliseHints('nope')).toEqual([]);
+  });
+});
+
 describe('resign', () => {
   it('ends the game with the computer as winner', () => {
     const state = resign(newGame('w', 1));
@@ -120,6 +152,16 @@ describe('fromSaved', () => {
   it('keeps the saved mode', () => {
     const restored = fromSaved({ moves: ['e4'], userColor: 'w', level: 2, mode: 'casual' });
     expect(restored?.mode).toBe('casual');
+  });
+
+  it('keeps valid saved hints', () => {
+    const restored = fromSaved({
+      moves: ['e4'],
+      userColor: 'w',
+      level: 2,
+      hints: [{ ply: 0, level: 3 }],
+    });
+    expect(restored?.hints).toEqual([{ ply: 0, level: 3 }]);
   });
 
   it('treats saves without a mode as practice games', () => {

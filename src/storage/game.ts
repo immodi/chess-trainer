@@ -1,5 +1,6 @@
 import type { Color } from 'chess.js';
-import type { GameMode } from '../modes/play';
+import type { GameMode, HintUse } from '../modes/play';
+import { normaliseHints } from '../modes/play';
 import { readValue, removeValue, writeValue } from './db';
 
 /** Enough to rebuild the game after the app was closed. */
@@ -10,6 +11,7 @@ export interface SavedGame {
   userColor: Color;
   level: number;
   mode: GameMode;
+  hints: HintUse[];
   updatedAt: number;
 }
 
@@ -30,7 +32,11 @@ export async function loadGame(mode: GameMode): Promise<SavedGame | null> {
   if (!raw && mode === 'practice') {
     const legacy = await readValue<SavedGame>(LEGACY_GAME_KEY);
     if (legacy) {
-      const migrated: SavedGame = { ...legacy, mode: 'practice' };
+      const migrated: SavedGame = {
+        ...legacy,
+        mode: 'practice',
+        hints: normaliseHints(legacy.hints),
+      };
       // Keep the legacy copy until the new one is safely written.
       if (await saveGame(migrated)) await removeValue(LEGACY_GAME_KEY);
       raw = migrated;
@@ -45,6 +51,7 @@ export async function loadGame(mode: GameMode): Promise<SavedGame | null> {
     userColor: raw.userColor,
     level: typeof raw.level === 'number' ? raw.level : 2,
     mode: raw.mode === 'casual' ? 'casual' : 'practice',
+    hints: normaliseHints(raw.hints),
     updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : 0,
   };
 }

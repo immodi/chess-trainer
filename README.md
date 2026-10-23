@@ -8,15 +8,15 @@ Stockfish can tell you that a move was bad. This app tries to tell you **why**, 
 
 ## Status
 
-**Phase 1.5 complete** — the app is a playable trainer, not a debug screen.
+**Phase 2 complete** — the app now explains why a move was bad, reviews the game afterwards, and remembers the positions you got wrong.
 
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Scaffold, Docker/CI pipeline, board renders, engine self-test | done |
 | 1 | Board interaction, engine wrapper, opponent, Play mode, threats, settings, home | done |
 | 1.5 | Casual game: plain chess with its own save, no coaching | done |
-| 2 | Move classification, detectors, feedback, game review, mistakes deck, glossary | next |
-| 3 | Puzzle import, Find the threat, Hanging pieces, Tactics, Endgames, Progress | planned |
+| 2 | Move classification, detectors, feedback, game review, mistakes deck, glossary | done |
+| 3 | Puzzle import, Find the threat, Hanging pieces, Tactics, Endgames, Progress | next |
 | 4 | Polish: haptics, animations, About, icon, performance pass | planned |
 
 What you can do today:
@@ -25,8 +25,12 @@ What you can do today:
 - Play a **casual game** when you just want chess: same opponent and board, no questions, no coaching, and it never changes your level or stats.
 - Tap a piece to see legal moves, then tap a destination to play it. No confirm step, no take-backs.
 - Answer "What is the opponent threatening?" before each move in a practice game. The board highlights the real threats afterwards and your accuracy is saved.
-- Read the four-question pre-move checklist from the home screen.
-- Change difficulty, touch-move and the threat-check mode in Settings.
+- Get a short **feedback card** after an inaccuracy, mistake or blunder: the reason first, with a glossary link and more reasons behind a toggle. The card never names the engine's move; that stays in Review.
+- Ask for up to three **hints** per practice game: a threat warning, the piece to look at, or the engine's move. Every hint is logged and flagged in Review.
+- **Review** a finished practice game: average win% lost, inaccuracy/mistake/blunder counts, an eval graph, your worst moves, the played move in red and the best move in green on demand, plus hint and rushed-threat flags.
+- Replay **Mistakes** from finished games in Learn. The deck uses 1/3/7/14-day spaced repetition and accepts only the best move.
+- Read the four-question pre-move checklist, your threat-check accuracy and the **Glossary** under **Learn**.
+- Change difficulty, touch-move, the threat-check mode and hints per game in Settings.
 - Close the app mid-game and continue where you left off.
 
 ## Install
@@ -50,7 +54,7 @@ npm run build          # typecheck + production web build
 ./build-apk.sh         # debug APK via Docker -> dist-apk/
 ```
 
-Releases are cut by tag: `git tag v0.2.0 && git push origin v0.2.0`. CI rebuilds, tests, and publishes the APK to GitHub Releases.
+Releases are cut by tag: `git tag v0.4.0 && git push origin v0.4.0`. CI rebuilds, tests, and publishes the APK to GitHub Releases.
 
 `build-apk.sh` runs entirely inside `capgo/capacitor:latest` (Node 24, JDK 21, Android SDK 36). CI calls the same script, so a local build and a CI build are the same build. The first run downloads Gradle and takes a while; the Gradle cache is reused after that.
 
@@ -59,13 +63,13 @@ Android is not a prerequisite: `npx cap add android` was run once and the genera
 ## Layout
 
 ```
-src/coach/      pure functions: detectors, SEE, threats, classification (no DOM, no engine)
-src/engine/     UCI client over a Web Worker, opponent move selection, eval maths
-src/modes/      one module per game mode
+src/coach/      pure functions: detectors, SEE, threats, tactics, classification (no DOM, no engine)
+src/engine/     UCI client over a Web Worker, opponent move selection, cached analysis, eval maths
+src/modes/      one module per game mode: play and review
 src/ui/         React screens, board component, shared widgets
-src/storage/    IndexedDB settings, progress, saved games
-src/data/       generated puzzles, theme text, endgame positions
-tests/          mirrors src/coach and src/engine
+src/storage/    IndexedDB settings, progress, saved games, mistakes deck
+src/data/       glossary, generated puzzles, theme text, endgame positions
+tests/          mirrors src/coach, src/engine, src/modes and src/storage
 scripts/        copy-stockfish.mjs (postinstall), prepare-puzzles.mjs (one-time, needs network)
 ```
 
@@ -76,6 +80,15 @@ Rules that override everything else are in `SPEC.md` §2 — notably: a move is 
 Stockfish 19, lite single-threaded WASM build, run in a Web Worker. `scripts/copy-stockfish.mjs` copies it from `node_modules/stockfish/bin` to `public/stockfish/engine.js` + `engine.wasm`.
 
 The two file names must stay in sync: the build looks for its wasm named after its own script (`engine.js` → `engine.wasm`) relative to the worker URL. Renaming one without the other produces a 404 and then a MIME-type error from `WebAssembly.instantiateStreaming`.
+
+## Coach
+
+`src/coach/` is pure and runs in a Web Worker for the pre-move threat check. In-game classification and Review use the same fixed analysis profile (depth 12, 600 ms cap) at every opponent level, so a move is judged the same way at level 1 and level 10. Review reuses the IndexedDB cache, so positions already seen in the game cost nothing.
+
+- `classify.ts`: win% loss thresholds from SPEC 6.4 (`good` < 2, `ok` < 5, `inaccuracy` < 10, `mistake` < 20, else `blunder`).
+- `detectors.ts` + `tactics.ts`: left-hanging, missed capture, allowed/missed mate, fork, pin, skewer, back rank, discovered attack.
+- `feedback.ts`: the highest-severity finding leads and the rest sit behind a "More reasons" toggle. When nothing fires, the fallback states the size of the loss without naming the engine's move. The only in-game best-move reveal is hint level 3.
+- `src/modes/review.ts`: one analysis per position, cached; builds the summary, eval graph, worst-move list and Mistakes-deck entries.
 
 ## Data
 

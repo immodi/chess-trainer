@@ -117,6 +117,29 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsProps) {
         ))}
       </section>
 
+      <section className="settings__group">
+        <h2 className="settings__title">Hints per practice game</h2>
+        <p className="settings__hint">
+          Level 1 warns about a threat, level 2 points at the piece to look at, level 3 shows the
+          engine move. Casual games never show hints.
+        </p>
+        <div className="level-picker level-picker--four" role="group" aria-label="Hints per game">
+          {[0, 1, 2, 3].map((count) => (
+            <button
+              key={count}
+              type="button"
+              className={`level-picker__level ${
+                settings.hintsPerGame === count ? 'level-picker__level--selected' : ''
+              }`}
+              aria-pressed={settings.hintsPerGame === count}
+              onClick={() => update({ hintsPerGame: count })}
+            >
+              {count}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <p className="screen__note">Settings are saved on this device and work offline.</p>
     </main>
   );

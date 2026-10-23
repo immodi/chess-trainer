@@ -6,12 +6,16 @@
 /** Capture search never looks deeper than this many plies. */
 export const SEE_MAX_PLIES = 8;
 
-/** Win% loss thresholds for move labels (SPEC 6.4). Phase 2 uses these. */
+/**
+ * Win% loss thresholds for move labels (SPEC 6.4):
+ * loss < good -> good, < ok -> ok, < mistake -> inaccuracy, < blunder -> mistake.
+ * A move that matches the engine's top choice is labelled `best` regardless.
+ */
 export const CLASSIFY = {
   good: 2,
   ok: 5,
-  inaccuracy: 10,
-  mistake: 20,
+  mistake: 10,
+  blunder: 20,
 } as const;
 
 /** Opponent levels (SPEC 6.3). */

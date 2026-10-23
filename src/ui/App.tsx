@@ -3,11 +3,14 @@ import type { GameMode } from '../modes/play';
 import type { Settings } from '../storage/settings';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { Checklist } from './screens/Checklist';
+import { Glossary } from './screens/Glossary';
 import { Home } from './screens/Home';
+import { Learn } from './screens/Learn';
+import { Mistakes } from './screens/Mistakes';
 import { Play } from './screens/Play';
 import { SettingsScreen } from './screens/Settings';
 
-type Route = 'home' | 'play' | 'settings' | 'checklist';
+type Route = 'home' | 'play' | 'settings' | 'learn' | 'checklist' | 'glossary' | 'mistakes';
 
 export function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -59,8 +62,21 @@ export function App() {
           onBack={() => setRoute('home')}
         />
       );
+    case 'learn':
+      return (
+        <Learn
+          onChecklist={() => setRoute('checklist')}
+          onGlossary={() => setRoute('glossary')}
+          onMistakes={() => setRoute('mistakes')}
+          onBack={() => setRoute('home')}
+        />
+      );
     case 'checklist':
-      return <Checklist onBack={() => setRoute('home')} />;
+      return <Checklist onBack={() => setRoute('learn')} />;
+    case 'glossary':
+      return <Glossary onBack={() => setRoute('learn')} />;
+    case 'mistakes':
+      return <Mistakes onBack={() => setRoute('learn')} touchMove={settings.touchMove} />;
     case 'home':
     default:
       return (
@@ -70,7 +86,7 @@ export function App() {
             setResume(wantsResume);
             setRoute('play');
           }}
-          onChecklist={() => setRoute('checklist')}
+          onLearn={() => setRoute('learn')}
           onSettings={() => setRoute('settings')}
         />
       );

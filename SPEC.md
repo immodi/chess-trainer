@@ -448,20 +448,20 @@ Finish and report on each phase before starting the next. At the end of every ph
 - [x] Settings screen; Home screen with Play and Checklist.
 
 ### Phase 1.5: Casual game
-- [ ] Home offers **Practice** and **Casual** games, each with its own Continue action.
-- [ ] Casual uses the same board, opponent levels, touch-move, promotion, resign and game end.
-- [ ] Casual shows no threat prompt, feedback, hints or review, and logs no threat answers.
-- [ ] Casual does not change the adaptive level or Progress.
-- [ ] Practice and casual saves are separate; resuming or finishing one never touches the other.
-- [ ] Tests cover the mode on `newGame`/`fromSaved`; `npm test` and `npm run build` pass.
+- [x] Home offers **Practice** and **Casual** games, each with its own Continue action.
+- [x] Casual uses the same board, opponent levels, touch-move, promotion, resign and game end.
+- [x] Casual shows no threat prompt, feedback, hints or review, and logs no threat answers.
+- [x] Casual does not change the adaptive level or Progress.
+- [x] Practice and casual saves are separate; resuming or finishing one never touches the other.
+- [x] Tests cover the mode on `newGame`/`fromSaved`; `npm test` and `npm run build` pass.
 
 ### Phase 2: The coach
-- [ ] `classify.ts` and one-search-per-position evaluation in Play mode.
-- [ ] All Phase-2 detectors in 6.5 with tests; `feedback.ts` with the fallback rule.
-- [ ] In-game feedback card (reason first, better move on demand); hints with logging.
-- [ ] Game review mode with caching, summary, mistake list, arrows.
-- [ ] Mistakes deck stored; replayable from Home.
-- [ ] Glossary screen.
+- [x] `classify.ts` and one-search-per-position evaluation in Play mode.
+- [x] All Phase-2 detectors in 6.5 with tests; `feedback.ts` with the fallback rule.
+- [x] In-game feedback card (reason first; the better move is shown in Review, see §14); hints with logging.
+- [x] Game review mode with caching, summary, mistake list, arrows.
+- [x] Mistakes deck stored; replayable from Learn (see §14).
+- [x] Glossary screen.
 
 ### Phase 3: Drills and progress
 - [ ] `prepare-puzzles.mjs` run; `puzzles.json` committed and under ~8 MB.
@@ -542,3 +542,14 @@ Record every deviation from this spec, every version you pinned, and every worka
 - 2026-10-23: The Phase 0 self-test screen is gone; the app now opens on Home (Play, Checklist, Settings). The depth-8 panel was developer tooling and the user found it confusing.
 
 - 2026-10-23: Added **Mode 1b: Casual game** as Phase 1.5 (user request: sometimes they just want to play chess). It reuses the Mode 1 board and opponent but skips every practice feature (threat prompt, feedback, hints, review, mistake deck) and never changes the adaptive level or Progress. It gets its own IndexedDB save slot so a casual game cannot overwrite a practice game; the legacy `current-game` key is migrated to the practice slot on first load.
+- 2026-10-24: Phase 2 complete. `classify.ts` uses the SPEC 6.4 thresholds; in-game classification and Review both use the fixed `ANALYSIS` profile (depth 12, movetime 600 ms), and Review reuses the IndexedDB `analysis:` cache. This is the fixed-profile deviation recorded on 2026-10-23; the 600 ms cap is longer than Mode 5's "about 250-300 ms" so in-game and review calls stay identical and cacheable.
+- 2026-10-24: Phase 2 feedback follows the 2026-10-23 no-best-move decision: the card has no "Show better move" button and the fallback names neither the best move nor the PV. The missed-capture/fork/discovered reasons describe the piece and target without giving the engine's SAN; allowed-mate still names the opponent's mating move because the game is already lost. Review shows the best move on demand.
+- 2026-10-24: Mistakes deck is a four-box Leitner deck with 1/3/7/14-day intervals. Only `mistake`/`blunder` moves from Review enter it; a repeated position+move restarts at box 1, and replay accepts only the exact stored best move (a wrong move resets to box 1). New cards are due the next day, so the Learn counter is 0 on the day they are added.
+- 2026-10-24: **Deviation from SPEC 6.7 Mode 5 / 6.8.** The user asked for Home to keep only Practice, Casual, Learn and Settings. The checklist, threat-check stats, Mistakes deck and Glossary now live under Learn; Home no longer shows the stats. The Mistakes deck is therefore replayable from Learn, not directly from Home.
+- 2026-10-24: **Deviation from SPEC 6.7 Mode 5.** Review is offered after a finished practice game only. Reviewing an in-progress saved game is deferred; the saved game has no per-move classifications, and analyzing a partial game would duplicate the eventual review.
+- 2026-10-24: Review annotates hinted moves from `GameState.hints` and rushed threat answers by matching the last 50 `Progress.recentThreatChecks` entries by FEN. Per-game threat checks are not stored in the save, so a repeated FEN or a game with more than 50 checks can mis-annotate. The annotation is advisory.
+- 2026-10-24: Adaptive `blundersPer100` counts the user moves classified in the current Play session. A resumed game only counts moves after the resume, because the save stores SAN history but not earlier classifications. The result and blunder count still update Progress once per finished game.
+- 2026-10-24: Hints per game (0-3) is now exposed in Settings; the 2026-10-23 note that it was hidden no longer applies. Each hint is saved with the game (`hints`) and flagged in Review. Level 3 is the only in-game best-move reveal.
+- 2026-10-24: `CLASSIFY` is `{good: 2, ok: 5, mistake: 10, blunder: 20}`. The earlier placeholder values did not match SPEC 6.4's thresholds; this is the implementation used by the tests.
+- 2026-10-24: The feedback card waits for the threat reveal to finish before appearing, so it does not cover the pre-move question. It remains dismissible and non-blocking once shown.
+- 2026-10-24: Phase 2 verification used Chromium against `vite preview` at 390x844: Home/Learn routes, all three hint levels, an inaccuracy feedback card after 1.f3, Review with eval graph and arrows, and a casual game with none of those features. The browser probe is `/tmp/opencode/verify/phase2.mjs` (not committed).
