@@ -55,6 +55,12 @@ export const ANALYSIS = {
   movetimeMs: 600,
 } as const;
 
+/** Full-strength opponent for endgame drills (SPEC 6.7 Mode 6). */
+export const ENDGAME = {
+  depth: 18,
+  movetimeMs: 1200,
+} as const;
+
 /** Threat prompt (SPEC 6.6). */
 export const THREAT_CHECK = {
   /** How long the correct answers stay visible after an answer, in ms. */

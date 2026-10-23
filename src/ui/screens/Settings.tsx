@@ -118,6 +118,22 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsProps) {
       </section>
 
       <section className="settings__group">
+        <h2 className="settings__title">Tactics puzzles</h2>
+        <Option
+          label="Learn"
+          hint="See the theme and what to look for before each puzzle."
+          selected={settings.tacticsMode === 'learn'}
+          onClick={() => update({ tacticsMode: 'learn' })}
+        />
+        <Option
+          label="Test"
+          hint="Hide the theme until you solve or miss the puzzle."
+          selected={settings.tacticsMode === 'test'}
+          onClick={() => update({ tacticsMode: 'test' })}
+        />
+      </section>
+
+      <section className="settings__group">
         <h2 className="settings__title">Hints per practice game</h2>
         <p className="settings__hint">
           Level 1 warns about a threat, level 2 points at the piece to look at, level 3 shows the

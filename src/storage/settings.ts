@@ -1,6 +1,7 @@
 import { readValue, writeValue } from './db';
 
 export type ThreatCheckMode = 'always' | 'whenThreatExists' | 'off';
+export type TacticsMode = 'learn' | 'test';
 
 export interface Settings {
   /** SPEC 2.5: once a piece is picked it must move. Default ON. */
@@ -11,6 +12,8 @@ export interface Settings {
   opponentLevel: 'adaptive' | number;
   /** Hints per game, 0-3. Used from Phase 2 on. */
   hintsPerGame: number;
+  /** SPEC 6.7 Mode 4: Learn shows the theme before the puzzle. */
+  tacticsMode: TacticsMode;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -18,6 +21,7 @@ export const DEFAULT_SETTINGS: Settings = {
   threatCheck: 'always',
   opponentLevel: 'adaptive',
   hintsPerGame: 3,
+  tacticsMode: 'learn',
 };
 
 const SETTINGS_KEY = 'settings';
@@ -46,11 +50,17 @@ export function normaliseSettings(raw: unknown): Settings {
       ? Math.min(3, Math.max(0, Math.round(value.hintsPerGame)))
       : DEFAULT_SETTINGS.hintsPerGame;
 
+  const tacticsMode =
+    value.tacticsMode === 'test' || value.tacticsMode === 'learn'
+      ? value.tacticsMode
+      : DEFAULT_SETTINGS.tacticsMode;
+
   return {
     touchMove: typeof value.touchMove === 'boolean' ? value.touchMove : DEFAULT_SETTINGS.touchMove,
     threatCheck,
     opponentLevel: normaliseLevel(value.opponentLevel),
     hintsPerGame: hints,
+    tacticsMode,
   };
 }
 

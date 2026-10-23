@@ -3,14 +3,31 @@ import type { GameMode } from '../modes/play';
 import type { Settings } from '../storage/settings';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { Checklist } from './screens/Checklist';
+import { Endgames } from './screens/Endgames';
 import { Glossary } from './screens/Glossary';
+import { HangingDrill } from './screens/HangingDrill';
 import { Home } from './screens/Home';
 import { Learn } from './screens/Learn';
 import { Mistakes } from './screens/Mistakes';
 import { Play } from './screens/Play';
+import { ProgressScreen } from './screens/Progress';
 import { SettingsScreen } from './screens/Settings';
+import { Tactics } from './screens/Tactics';
+import { ThreatDrill } from './screens/ThreatDrill';
 
-type Route = 'home' | 'play' | 'settings' | 'learn' | 'checklist' | 'glossary' | 'mistakes';
+type Route =
+  | 'home'
+  | 'play'
+  | 'settings'
+  | 'learn'
+  | 'checklist'
+  | 'glossary'
+  | 'mistakes'
+  | 'progress'
+  | 'threat-drill'
+  | 'hanging-drill'
+  | 'tactics'
+  | 'endgames';
 
 export function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -68,6 +85,11 @@ export function App() {
           onChecklist={() => setRoute('checklist')}
           onGlossary={() => setRoute('glossary')}
           onMistakes={() => setRoute('mistakes')}
+          onProgress={() => setRoute('progress')}
+          onThreatDrill={() => setRoute('threat-drill')}
+          onHangingDrill={() => setRoute('hanging-drill')}
+          onTactics={() => setRoute('tactics')}
+          onEndgames={() => setRoute('endgames')}
           onBack={() => setRoute('home')}
         />
       );
@@ -77,6 +99,16 @@ export function App() {
       return <Glossary onBack={() => setRoute('learn')} />;
     case 'mistakes':
       return <Mistakes onBack={() => setRoute('learn')} touchMove={settings.touchMove} />;
+    case 'progress':
+      return <ProgressScreen onBack={() => setRoute('learn')} />;
+    case 'threat-drill':
+      return <ThreatDrill onBack={() => setRoute('learn')} />;
+    case 'hanging-drill':
+      return <HangingDrill onBack={() => setRoute('learn')} />;
+    case 'tactics':
+      return <Tactics settings={settings} onBack={() => setRoute('learn')} />;
+    case 'endgames':
+      return <Endgames touchMove={settings.touchMove} onBack={() => setRoute('learn')} />;
     case 'home':
     default:
       return (

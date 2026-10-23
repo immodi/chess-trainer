@@ -28,6 +28,45 @@ describe('computeThreats', () => {
     const threats = computeThreats('k2q4/8/8/8/8/8/5PPP/6K1 w - - 0 1');
     expect(threats?.[0]?.kind).toBe('mate');
   });
+
+  it('finds a knight fork threat (positive fixture)', () => {
+    expect(computeThreats('4k3/8/8/2n5/8/8/8/2R1K3 w - - 0 1')).toEqual([
+      {
+        kind: 'fork',
+        squares: ['c1', 'e1'],
+        value: 5,
+        move: 'c5d3',
+        actor: 'd3',
+        targets: ['c1', 'e1'],
+      },
+    ]);
+  });
+
+  it('finds a pin threat (positive fixture)', () => {
+    expect(computeThreats('4k3/8/8/5b2/8/5N2/8/3QK3 w - - 0 1')).toEqual([
+      {
+        kind: 'pin',
+        squares: ['f3'],
+        value: 3,
+        move: 'f5g4',
+        actor: 'g4',
+        targets: ['f3', 'd1'],
+      },
+    ]);
+  });
+
+  it('finds a skewer threat (positive fixture)', () => {
+    const threats = computeThreats('r3k3/8/8/8/n7/8/Q7/R3K3 w - - 0 1') ?? [];
+    expect(threats).toContainEqual(
+      expect.objectContaining({
+        kind: 'skewer',
+        squares: ['a1'],
+        value: 5,
+        actor: 'a8',
+        targets: ['a2', 'a1'],
+      }),
+    );
+  });
 });
 
 describe('threatTargets', () => {

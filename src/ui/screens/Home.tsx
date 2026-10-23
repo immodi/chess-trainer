@@ -57,7 +57,7 @@ export function Home({ onPlay, onLearn, onSettings }: HomeProps) {
       <button type="button" className="card card--link" onClick={onLearn}>
         <span className="card__title">Learn</span>
         <span className="card__body">
-          The pre-move checklist, your threat-check stats, the glossary and mistakes to review.
+          Drills, the pre-move checklist, your progress, the glossary and mistakes to review.
         </span>
       </button>
 

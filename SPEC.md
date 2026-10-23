@@ -464,10 +464,10 @@ Finish and report on each phase before starting the next. At the end of every ph
 - [x] Glossary screen.
 
 ### Phase 3: Drills and progress
-- [ ] `prepare-puzzles.mjs` run; `puzzles.json` committed and under ~8 MB.
-- [ ] Find the threat, Hanging pieces, Tactics (Learn/Test, adaptive band, re-queue on fail), Endgame drills.
-- [ ] Progress screen with the numbers in 6.8.
-- [ ] Threat computation extended with fork/pin/skewer threats.
+- [x] `prepare-puzzles.mjs` run; `puzzles.json` committed and under ~8 MB.
+- [x] Find the threat, Hanging pieces, Tactics (Learn/Test, adaptive band, re-queue on fail), Endgame drills.
+- [x] Progress screen with the numbers in 6.8.
+- [x] Threat computation extended with fork/pin/skewer threats.
 
 ### Phase 4: Polish
 - [ ] Haptics, sounds (optional), animations, empty/error states, About screen with licenses, app icon.
@@ -554,3 +554,11 @@ Record every deviation from this spec, every version you pinned, and every worka
 - 2026-10-24: The feedback card waits for the threat reveal to finish before appearing, so it does not cover the pre-move question. It remains dismissible and non-blocking once shown.
 - 2026-10-24: Phase 2 verification used Chromium against `vite preview` at 390x844: Home/Learn routes, all three hint levels, an inaccuracy feedback card after 1.f3, Review with eval graph and arrows, and a casual game with none of those features. The browser probe is `/tmp/opencode/verify/phase2.mjs` (not committed).
 - 2026-10-24: App icon is the Cburnett black knight on a cream `#F0D9B5` field, reusing the board piece set (CC BY-SA 3.0, see `public/pieces/cburnett/README.md`). Source SVGs live in `resources/`; `scripts/generate-icons.sh` regenerates the Android mipmaps. The default Capacitor icon and splash images were replaced; the splash uses the dark app background with the square icon. This takes the icon item from Phase 4 early (user request).
+- 2026-10-24: Phase 3 puzzle data was generated from the Lichess puzzle database with `scripts/prepare-puzzles.mjs`: rating 600–1800, rating deviation < 100, popularity ≥ 80, plays ≥ 500, 12 rating bins of 100 points, and up to 125 puzzles per bin per theme (1,500 per theme). The result is 17,240 unique puzzles in `src/data/puzzles.json` (2.43 MB, under the 8 MB budget). A puzzle keeps every selected theme it carries, so per-theme counts are not exclusive.
+- 2026-10-24: A full solution replay of all 17,240 puzzles was run once while preparing the data and passed. `tests/data/puzzles.test.ts` validates every row's schema and FEN and replays every 30th solution with `preparePuzzle`; replaying all 17k solutions made the unit suite take ~23 s, so the committed test uses a broad sample. `prepare-puzzles.mjs` prints manual download instructions when the database cannot be fetched.
+- 2026-10-24: **Endgame validation workaround.** The endgame FENs and goals were checked with native Stockfish 19 at depth 18 (KQvK mate 6, KRvK +709, KPvK win +702, rook-pawn draw 0, R+P draw +4, R+P win +401). The Node `stockfish` 19.0.1 WASM package crashes under Node v24.18.0 with `RuntimeError: unreachable`, so the stored `engine` result is committed with each drill and `tests/data/endgames.test.ts` checks that every FEN is legal, unfinished, and that its stored score supports the goal. A live engine replay is not part of `npm test`; re-run the native binary if the data changes.
+- 2026-10-24: Endgame drills use full-strength Stockfish with a fixed `ENDGAME` profile (depth 18, 1,200 ms cap) and no level sampling. The move budget counts full moves; for a draw drill, reaching the budget without losing counts as success, while a win drill must actually mate.
+- 2026-10-24: Tactics Learn/Test is stored as `settings.tacticsMode` (default `learn`). Learn shows the theme name and `lookFor` text before the puzzle; Test hides them until the answer. A failed puzzle is re-queued after at least one fresh puzzle in the same session; the queue is not persisted.
+- 2026-10-24: Find-the-threat sessions start with failed in-game threat checks, then add puzzle positions after applying the opponent's first move. About a quarter of the session is reserved for positions with no threats so "Nothing" remains a real answer. Hanging-piece sessions use the same prepared puzzle positions and keep only positions with 0–3 hanging pieces. Both drills use the coach worker and record separate Progress counters.
+- 2026-10-24: Phase 3 keeps the Home screen at Practice, Casual, Learn and Settings. Drills, Progress, Mistakes, Checklist and Glossary all live under Learn, extending the Phase 2 navigation decision.
+- 2026-10-24: Phase 3 verification used Chromium at 390x844 against `vite preview`: Learn, Progress, the tactics theme picker and a puzzle, an endgame with a full-strength reply, and both drill answer/reveal flows. The probe is `/tmp/opencode/verify/phase3-interact.mjs` (not committed); it reported no page or console errors.

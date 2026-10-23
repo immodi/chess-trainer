@@ -7,10 +7,25 @@ export interface LearnProps {
   onChecklist: () => void;
   onGlossary: () => void;
   onMistakes: () => void;
+  onProgress: () => void;
+  onThreatDrill: () => void;
+  onHangingDrill: () => void;
+  onTactics: () => void;
+  onEndgames: () => void;
   onBack: () => void;
 }
 
-export function Learn({ onChecklist, onGlossary, onMistakes, onBack }: LearnProps) {
+export function Learn({
+  onChecklist,
+  onGlossary,
+  onMistakes,
+  onProgress,
+  onThreatDrill,
+  onHangingDrill,
+  onTactics,
+  onEndgames,
+  onBack,
+}: LearnProps) {
   const [progress, setProgress] = useState<Progress>(EMPTY_PROGRESS);
   const [due, setDue] = useState(0);
 
@@ -40,28 +55,44 @@ export function Learn({ onChecklist, onGlossary, onMistakes, onBack }: LearnProp
         <h1>Learn</h1>
       </header>
 
-      <p className="screen__lead">The ideas behind the coach, plus the positions you got wrong.</p>
+      <p className="screen__lead">The ideas behind the coach, drills to train them, and your record.</p>
 
-      <button type="button" className="card card--link" onClick={onChecklist}>
-        <span className="card__title">Before every move</span>
-        <span className="card__body">The four questions that catch most beginner mistakes.</span>
-      </button>
+      <section>
+        <h2 className="settings__title">Drills</h2>
+        <button type="button" className="card card--link" onClick={onThreatDrill}>
+          <span className="card__title">Find the threat</span>
+          <span className="card__body">
+            Tap what the opponent is threatening. Quiet positions are mixed in.
+          </span>
+        </button>
+        <button type="button" className="card card--link" onClick={onHangingDrill}>
+          <span className="card__title">Hanging pieces</span>
+          <span className="card__body">Tap every loose piece, for both colours.</span>
+        </button>
+        <button type="button" className="card card--link" onClick={onTactics}>
+          <span className="card__title">Tactics by pattern</span>
+          <span className="card__body">
+            Puzzles by theme, with a rating band that adapts to your results.
+          </span>
+        </button>
+        <button type="button" className="card card--link" onClick={onEndgames}>
+          <span className="card__title">Endgame drills</span>
+          <span className="card__body">
+            Convert winning endings or hold the draw against full-strength Stockfish.
+          </span>
+        </button>
+      </section>
 
-      <section className="card">
-        <span className="card__title">Your threat checks</span>
-        {accuracy === null ? (
+      <section>
+        <h2 className="settings__title">Your record</h2>
+        <button type="button" className="card card--link" onClick={onProgress}>
+          <span className="card__title">Progress</span>
           <span className="card__body">
-            No answers yet. A practice game asks you before every move.
+            {accuracy === null
+              ? 'Threat checks, hanging pieces, tactics and endgames.'
+              : `Threat checks ${accuracy}% · ${due} mistakes due today.`}
           </span>
-        ) : (
-          <span className="card__body">
-            {accuracy}% correct over {progress.threatAnswers}{' '}
-            {progress.threatAnswers === 1 ? 'answer' : 'answers'}.
-            {progress.threatRushed > 0
-              ? ` ${progress.threatRushed} answered in under 2 seconds.`
-              : ' No rushed answers.'}
-          </span>
-        )}
+        </button>
       </section>
 
       <button type="button" className="card card--link" onClick={onMistakes}>
@@ -71,6 +102,11 @@ export function Learn({ onChecklist, onGlossary, onMistakes, onBack }: LearnProp
             ? `${due} ${due === 1 ? 'position is' : 'positions are'} due today.`
             : 'Positions from finished games, spaced out over time.'}
         </span>
+      </button>
+
+      <button type="button" className="card card--link" onClick={onChecklist}>
+        <span className="card__title">Before every move</span>
+        <span className="card__body">The four questions that catch most beginner mistakes.</span>
       </button>
 
       <button type="button" className="card card--link" onClick={onGlossary}>
