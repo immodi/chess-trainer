@@ -1,0 +1,6 @@
+{
+  "package": "stockfish@19.0.1",
+  "build": "19",
+  "variant": "lite-single",
+  "source": "stockfish-19-lite-single.js"
+}

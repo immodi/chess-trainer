@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-apk/
+.gradle-cache/
+*.local
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Android build output (the platform folder itself is committed)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
