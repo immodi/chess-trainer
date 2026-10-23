@@ -41,6 +41,8 @@ npm run build          # typecheck + production web build
 ./build-apk.sh         # debug APK via Docker -> dist-apk/
 ```
 
+Releases are cut by tag: `git tag v0.2.0 && git push origin v0.2.0`. CI rebuilds, tests, and publishes the APK to GitHub Releases.
+
 `build-apk.sh` runs entirely inside `capgo/capacitor:latest` (Node 24, JDK 21, Android SDK 36). CI calls the same script, so a local build and a CI build are the same build. The first run downloads Gradle and takes a while; the Gradle cache is reused after that.
 
 Android is not a prerequisite: `npx cap add android` was run once and the generated project is committed. `npx cap sync android` re-copies web assets before a native build.

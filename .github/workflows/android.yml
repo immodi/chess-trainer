@@ -3,12 +3,16 @@ name: Android APK
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   web:
@@ -61,3 +65,40 @@ jobs:
           path: dist-apk/chess-trainer-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+  release:
+    name: Publish release
+    # Tag pushes only: `git push origin v0.2.0` builds and publishes.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [web, apk]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download APK
+        uses: actions/download-artifact@v8
+        with:
+          name: chess-trainer-debug-apk
+          path: dist-apk
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Debug APK built from \`$TAG\` by the Android APK workflow."
+            echo
+            echo "Install with \`adb install -r chess-trainer-debug.apk\`, or copy it to the phone and allow install from unknown sources."
+          } > release-notes.md
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist-apk/chess-trainer-debug.apk --clobber
+          else
+            gh release create "$TAG" dist-apk/chess-trainer-debug.apk \
+              --title "Chess Trainer $TAG" \
+              --notes-file release-notes.md
+          fi
