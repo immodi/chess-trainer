@@ -8,3 +8,6 @@ licence (CC BY-SA 3.0), <https://creativecommons.org/licenses/by-sa/3.0/>.
 
 Credit is shown in the app's About screen. If these files are modified, the
 derived set must stay under CC BY-SA 3.0.
+
+The app icon reuses the black knight from this set (see `resources/icon.svg`);
+it is a derivative work under the same licence.

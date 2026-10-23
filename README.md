@@ -54,7 +54,7 @@ npm run build          # typecheck + production web build
 ./build-apk.sh         # debug APK via Docker -> dist-apk/
 ```
 
-Releases are cut by tag: `git tag v0.4.0 && git push origin v0.4.0`. CI rebuilds, tests, and publishes the APK to GitHub Releases.
+Releases are cut by tag: `git tag v0.4.1 && git push origin v0.4.1`. CI rebuilds, tests, and publishes the APK to GitHub Releases.
 
 `build-apk.sh` runs entirely inside `capgo/capacitor:latest` (Node 24, JDK 21, Android SDK 36). CI calls the same script, so a local build and a CI build are the same build. The first run downloads Gradle and takes a while; the Gradle cache is reused after that.
 
@@ -70,7 +70,9 @@ src/ui/         React screens, board component, shared widgets
 src/storage/    IndexedDB settings, progress, saved games, mistakes deck
 src/data/       glossary, generated puzzles, theme text, endgame positions
 tests/          mirrors src/coach, src/engine, src/modes and src/storage
-scripts/        copy-stockfish.mjs (postinstall), prepare-puzzles.mjs (one-time, needs network)
+scripts/        copy-stockfish.mjs (postinstall), prepare-puzzles.mjs (one-time, needs network),
+                generate-icons.sh (launcher icons and splash screens, dev helper)
+resources/      app icon SVG sources; generated Android mipmaps live in android/app/src/main/res
 ```
 
 Rules that override everything else are in `SPEC.md` §2 — notably: a move is played the instant you tap a legal square, there are no take-backs anywhere, illegal taps are silently ignored, and the app never invents a coaching reason that no detector or engine result supports.
@@ -97,7 +99,7 @@ Fully offline after install. Puzzles come from the [Lichess puzzle database](htt
 ## Licences
 
 - **Stockfish** — GPL v3. The APK bundles it, so if this is ever distributed the source must be made available. Credited in the About screen.
-- **Cburnett piece set** — CC BY-SA 3.0, see `public/pieces/cburnett/README.md`.
+- **Cburnett piece set** — CC BY-SA 3.0, see `public/pieces/cburnett/README.md`. The app icon is derived from the black knight in this set.
 - **Lichess puzzle database** — CC0.
 - **chess.js** — BSD-2-Clause.
 
