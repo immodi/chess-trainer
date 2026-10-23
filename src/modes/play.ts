@@ -4,6 +4,12 @@ import { opposite } from '../coach/hanging';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+/**
+ * Practice games run the coach and feed Progress; casual games are plain chess
+ * with their own save slot (SPEC 6.7 Mode 1b).
+ */
+export type GameMode = 'practice' | 'casual';
+
 export type GameOutcome =
   | { kind: 'checkmate'; winner: Color }
   | { kind: 'resigned'; winner: Color }
@@ -25,6 +31,7 @@ export interface GameState {
   userColor: Color;
   /** Adaptive level this game is being played at. */
   level: number;
+  mode: GameMode;
   outcome: GameOutcome | null;
 }
 
@@ -34,8 +41,12 @@ export interface MoveInput {
   promotion?: PieceSymbol;
 }
 
-export function newGame(userColor: Color, level: number): GameState {
-  return { fen: START_FEN, moves: [], userColor, level, outcome: null };
+export function newGame(
+  userColor: Color,
+  level: number,
+  mode: GameMode = 'practice',
+): GameState {
+  return { fen: START_FEN, moves: [], userColor, level, mode, outcome: null };
 }
 
 /** Rebuilds the position with full history from the SAN list. */
@@ -107,6 +118,8 @@ export interface SavedInput {
   moves: string[];
   userColor: Color;
   level: number;
+  /** Missing in saves written before casual mode existed. */
+  mode?: GameMode;
 }
 
 /** Rebuilds a game from saved SAN moves. Returns null for an unusable save. */
@@ -135,6 +148,7 @@ export function fromSaved(saved: SavedInput): GameState | null {
     moves,
     userColor: saved.userColor,
     level: saved.level,
+    mode: saved.mode === 'casual' ? 'casual' : 'practice',
     outcome: outcomeOf(chess),
   };
 }

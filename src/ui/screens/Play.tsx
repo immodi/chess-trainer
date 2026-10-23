@@ -17,7 +17,7 @@ import {
   resultText,
   turnOf,
 } from '../../modes/play';
-import type { GameState } from '../../modes/play';
+import type { GameMode, GameState } from '../../modes/play';
 import { clearGame, loadGame, saveGame } from '../../storage/game';
 import {
   loadProgress,
@@ -32,6 +32,7 @@ import { describeThreats } from '../threatText';
 
 export interface PlayProps {
   settings: Settings;
+  mode: GameMode;
   resume: boolean;
   onExit: () => void;
 }
@@ -41,7 +42,7 @@ type ThreatPrompt =
   | { status: 'asking'; threats: Threat[]; marked: Square[]; startedAt: number }
   | { status: 'reveal'; threats: Threat[]; marked: Square[]; correct: boolean };
 
-export function Play({ settings, resume, onExit }: PlayProps) {
+export function Play({ settings, mode, resume, onExit }: PlayProps) {
   const [game, setGame] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(resume);
   const [engineReady, setEngineReady] = useState(false);
@@ -65,20 +66,23 @@ export function Play({ settings, resume, onExit }: PlayProps) {
       if (finishedRef.current) return;
       finishedRef.current = true;
       const outcome = next.outcome;
-      void clearGame();
-      void (async () => {
-        await recordGameFinished();
-        if (settingsRef.current.opponentLevel !== 'adaptive') return;
-        const updated = nextAdaptiveLevel({
-          level: next.level,
-          // Classification arrives in Phase 2; until then a win promotes and a
-          // loss demotes, which is the documented adaptive stub.
-          blundersPer100: 0,
-          result: resultFor(outcome, next.userColor),
-        });
-        setAdaptiveLevelState(updated);
-        await setAdaptiveLevel(updated);
-      })();
+      void clearGame(next.mode);
+      // Casual games are plain chess: no Progress, no adaptive change.
+      if (next.mode === 'practice') {
+        void (async () => {
+          await recordGameFinished();
+          if (settingsRef.current.opponentLevel !== 'adaptive') return;
+          const updated = nextAdaptiveLevel({
+            level: next.level,
+            // Classification arrives in Phase 2; until then a win promotes and a
+            // loss demotes, which is the documented adaptive stub.
+            blundersPer100: 0,
+            result: resultFor(outcome, next.userColor),
+          });
+          setAdaptiveLevelState(updated);
+          await setAdaptiveLevel(updated);
+        })();
+      }
       return;
     }
 
@@ -87,6 +91,7 @@ export function Play({ settings, resume, onExit }: PlayProps) {
       moves: next.moves.map((move) => move.san),
       userColor: next.userColor,
       level: next.level,
+      mode: next.mode,
       updatedAt: Date.now(),
     });
   }, []);
@@ -111,7 +116,7 @@ export function Play({ settings, resume, onExit }: PlayProps) {
     });
 
     if (resume) {
-      void loadGame().then((saved) => {
+      void loadGame(mode).then((saved) => {
         if (cancelled) return;
         if (saved) {
           const restored = fromSaved(saved);
@@ -128,7 +133,7 @@ export function Play({ settings, resume, onExit }: PlayProps) {
     return () => {
       cancelled = true;
     };
-  }, [resume]);
+  }, [mode, resume]);
 
   useEffect(
     () => () => {
@@ -137,8 +142,9 @@ export function Play({ settings, resume, onExit }: PlayProps) {
     [],
   );
 
-  // Threat check before each user move (SPEC 2.7 / 6.6).
+  // Threat check before each user move (SPEC 2.7 / 6.6). Practice only.
   useEffect(() => {
+    if (mode !== 'practice') return;
     if (!game || game.outcome) return;
     if (turnOf(game.fen) !== game.userColor) return;
     if (settings.threatCheck === 'off') return;
@@ -157,7 +163,7 @@ export function Play({ settings, resume, onExit }: PlayProps) {
     return () => {
       cancelled = true;
     };
-  }, [game, settings.threatCheck]);
+  }, [game, mode, settings.threatCheck]);
 
   // Opponent's turn.
   useEffect(() => {
@@ -195,7 +201,7 @@ export function Play({ settings, resume, onExit }: PlayProps) {
     promptedFor.current = null;
     setThreat({ status: 'idle' });
     const level = settings.opponentLevel === 'adaptive' ? adaptiveLevel : settings.opponentLevel;
-    commit(newGame(color, level));
+    commit(newGame(color, level, mode));
   };
 
   const handleMove = (move: BoardMove): void => {
@@ -265,7 +271,7 @@ export function Play({ settings, resume, onExit }: PlayProps) {
           <button type="button" className="button button--ghost" onClick={onExit}>
             Back
           </button>
-          <h1>New game</h1>
+          <h1>{mode === 'casual' ? 'New casual game' : 'New practice game'}</h1>
         </header>
         <p className="screen__lead">Which colour do you want to play?</p>
         <div className="home__actions">
@@ -288,6 +294,10 @@ export function Play({ settings, resume, onExit }: PlayProps) {
           </button>
         </div>
         <p className="screen__note">
+          {mode === 'casual'
+            ? 'Plain chess: no threat checks, no coaching.'
+            : 'Practice game: threat checks and coaching are on.'}
+          <br />
           Level {settings.opponentLevel === 'adaptive' ? adaptiveLevel : settings.opponentLevel}.
           Untimed game.
         </p>
@@ -309,7 +319,9 @@ export function Play({ settings, resume, onExit }: PlayProps) {
         </button>
         <div className="play__meta">
           <span>{game.userColor === 'w' ? 'You are White' : 'You are Black'}</span>
-          <span className="play__level">Level {game.level}</span>
+          <span className="play__level">
+            {game.mode === 'casual' ? 'Casual' : 'Practice'} · Level {game.level}
+          </span>
         </div>
         {!game.outcome ? (
           <button type="button" className="button button--ghost" onClick={doResign}>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { GameMode } from '../modes/play';
 import type { Settings } from '../storage/settings';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { Checklist } from './screens/Checklist';
@@ -10,6 +11,7 @@ type Route = 'home' | 'play' | 'settings' | 'checklist';
 
 export function App() {
   const [route, setRoute] = useState<Route>('home');
+  const [playMode, setPlayMode] = useState<GameMode>('practice');
   const [resume, setResume] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
 
@@ -41,6 +43,7 @@ export function App() {
       return (
         <Play
           settings={settings}
+          mode={playMode}
           resume={resume}
           onExit={() => {
             setResume(false);
@@ -62,7 +65,8 @@ export function App() {
     default:
       return (
         <Home
-          onPlay={(wantsResume) => {
+          onPlay={(mode, wantsResume) => {
+            setPlayMode(mode);
             setResume(wantsResume);
             setRoute('play');
           }}

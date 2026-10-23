@@ -277,13 +277,20 @@ type Detector = (ctx: DetectCtx) => Finding[];
 
 ### 6.7 Modes
 
-**Mode 1: Play vs Stockfish**
+**Mode 1: Practice game**
 - Choose color (white / black / random). Untimed. Opponent per 6.3.
 - Threat check per setting, touch-move per setting, no confirm, no undo.
 - After the opponent's reply, show a non-blocking feedback card if the user's last move was `inaccuracy` or worse (reason first, "Show better move" second). Dismissible.
 - **Hints** (max 3 per game, each logged and flagged in Review): level 1 tells whether a threat exists, level 2 highlights the piece/square to look at, level 3 shows the engine's best move.
 - Resign button. Game end: checkmate, stalemate, repetition, 50-move rule, insufficient material.
 - On game end, offer Review.
+
+**Mode 1b: Casual game**
+- Plain chess, for when the user just wants to play. Same board and opponent as Mode 1: color choice, untimed, levels 1–10 or the current adaptive level, touch-move setting, legal-move dots, promotion sheet, resign, game end, save/resume.
+- **No practice features at all:** no threat prompt, no feedback card, no hints, no review, no Mistakes deck, no glossary links, no threat-answer logging.
+- Does not change the adaptive level and does not count toward Progress. An adaptive setting uses the stored `adaptiveLevel` as a fixed level for that game.
+- Has its **own save slot**, independent of the practice save. Starting or finishing one mode never overwrites the other.
+- Home offers both modes, each with its own Continue action. Casual games are labelled as such in the game header.
 
 **Mode 2: Find the threat**
 - Position with the user to move. Same tap-squares UI as 6.6. Ground truth from `computeThreats`. About 25% of positions have no threat.
@@ -319,6 +326,8 @@ Home screen shows: current opponent level, blunders per 100 moves (last 10 games
 ### 6.9 Settings
 
 Opponent level (adaptive / fixed 1–10); touch-move (default on); threat check (`always` | `whenThreatExists` | `off`, default `always`); hints per game (0–3, default 3); tactics Learn/Test; show eval bar in Play (default off); board orientation and theme; haptics (optional).
+
+Touch-move and the board options apply to both game modes. Threat check and hints apply to the **practice game only**; a casual game ignores them.
 
 ---
 
@@ -438,6 +447,14 @@ Finish and report on each phase before starting the next. At the end of every ph
 - [x] `see.ts`, `hanging.ts`, `threats.ts` with tests; threat-check prompt with all three settings; response logged.
 - [x] Settings screen; Home screen with Play and Checklist.
 
+### Phase 1.5: Casual game
+- [ ] Home offers **Practice** and **Casual** games, each with its own Continue action.
+- [ ] Casual uses the same board, opponent levels, touch-move, promotion, resign and game end.
+- [ ] Casual shows no threat prompt, feedback, hints or review, and logs no threat answers.
+- [ ] Casual does not change the adaptive level or Progress.
+- [ ] Practice and casual saves are separate; resuming or finishing one never touches the other.
+- [ ] Tests cover the mode on `newGame`/`fromSaved`; `npm test` and `npm run build` pass.
+
 ### Phase 2: The coach
 - [ ] `classify.ts` and one-search-per-position evaluation in Play mode.
 - [ ] All Phase-2 detectors in 6.5 with tests; `feedback.ts` with the fallback rule.
@@ -523,3 +540,5 @@ Record every deviation from this spec, every version you pinned, and every worka
 - 2026-10-23: Threat checks run in a module Web Worker (`src/coach/worker.ts` via `client.ts`) with a synchronous fallback if worker construction fails, so an old WebView degrades instead of breaking. The prompt locks the board until the answer is given (SPEC 6.6), and the reveal highlights stay for 1.5 s without blocking the next move.
 - 2026-10-23: `settings.hintsPerGame` is stored but not shown in Settings yet, because hints themselves are Phase 2. No dead controls in the UI.
 - 2026-10-23: The Phase 0 self-test screen is gone; the app now opens on Home (Play, Checklist, Settings). The depth-8 panel was developer tooling and the user found it confusing.
+
+- 2026-10-23: Added **Mode 1b: Casual game** as Phase 1.5 (user request: sometimes they just want to play chess). It reuses the Mode 1 board and opponent but skips every practice feature (threat prompt, feedback, hints, review, mistake deck) and never changes the adaptive level or Progress. It gets its own IndexedDB save slot so a casual game cannot overwrite a practice game; the legacy `current-game` key is migrated to the practice slot on first load.

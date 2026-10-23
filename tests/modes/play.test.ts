@@ -31,6 +31,14 @@ describe('newGame', () => {
   it('is not the user turn when the user plays Black', () => {
     expect(isUserTurn(newGame('b', 3))).toBe(false);
   });
+
+  it('defaults to a practice game', () => {
+    expect(newGame('w', 3).mode).toBe('practice');
+  });
+
+  it('carries the requested mode', () => {
+    expect(newGame('w', 3, 'casual').mode).toBe('casual');
+  });
 });
 
 describe('applyMove', () => {
@@ -106,6 +114,17 @@ describe('fromSaved', () => {
     expect(restored?.fen).toBe(state.fen);
     expect(restored?.moves.map((move) => move.san)).toEqual(['e4', 'e5']);
     expect(restored?.outcome).toBeNull();
+    expect(restored?.mode).toBe('practice');
+  });
+
+  it('keeps the saved mode', () => {
+    const restored = fromSaved({ moves: ['e4'], userColor: 'w', level: 2, mode: 'casual' });
+    expect(restored?.mode).toBe('casual');
+  });
+
+  it('treats saves without a mode as practice games', () => {
+    const restored = fromSaved({ moves: ['e4'], userColor: 'w', level: 2 });
+    expect(restored?.mode).toBe('practice');
   });
 
   it('returns null for a corrupt save', () => {

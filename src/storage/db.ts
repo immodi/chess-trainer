@@ -15,11 +15,14 @@ export async function readValue<T>(key: string): Promise<T | undefined> {
   }
 }
 
-export async function writeValue<T>(key: string, value: T): Promise<void> {
+/** Returns false when storage is unavailable or full. */
+export async function writeValue<T>(key: string, value: T): Promise<boolean> {
   try {
     await set(key, value, store);
+    return true;
   } catch {
     // Losing a save must never break the game in progress.
+    return false;
   }
 }
 

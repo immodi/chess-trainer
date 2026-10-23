@@ -8,21 +8,23 @@ Stockfish can tell you that a move was bad. This app tries to tell you **why**, 
 
 ## Status
 
-**Phase 1 complete** — the app is a playable trainer, not a debug screen.
+**Phase 1.5 complete** — the app is a playable trainer, not a debug screen.
 
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Scaffold, Docker/CI pipeline, board renders, engine self-test | done |
 | 1 | Board interaction, engine wrapper, opponent, Play mode, threats, settings, home | done |
+| 1.5 | Casual game: plain chess with its own save, no coaching | done |
 | 2 | Move classification, detectors, feedback, game review, mistakes deck, glossary | next |
 | 3 | Puzzle import, Find the threat, Hanging pieces, Tactics, Endgames, Progress | planned |
 | 4 | Polish: haptics, animations, About, icon, performance pass | planned |
 
 What you can do today:
 
-- Play an untimed game against a level 1-10 opponent (adaptive by default).
+- Play an untimed **practice game** against a level 1-10 opponent (adaptive by default).
+- Play a **casual game** when you just want chess: same opponent and board, no questions, no coaching, and it never changes your level or stats.
 - Tap a piece to see legal moves, then tap a destination to play it. No confirm step, no take-backs.
-- Answer "What is the opponent threatening?" before each move. The board highlights the real threats afterwards and your accuracy is saved.
+- Answer "What is the opponent threatening?" before each move in a practice game. The board highlights the real threats afterwards and your accuracy is saved.
 - Read the four-question pre-move checklist from the home screen.
 - Change difficulty, touch-move and the threat-check mode in Settings.
 - Close the app mid-game and continue where you left off.
